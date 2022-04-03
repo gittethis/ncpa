@@ -10,6 +10,20 @@ import subprocess
 class ProcessNode(nodes.LazyNode):
 
     @staticmethod
+    def get_topcpu(request_args):
+        topcpu = request_args.get('topcpu', [])
+        if not isinstance(topcpu, list):
+            topcpu = [topcpu]
+        return topcpu
+
+    @staticmethod
+    def get_topmem(request_args):
+        topmem = request_args.get('topmem', [])
+        if not isinstance(topmem, list):
+            topmem = [topmem]
+        return topmem
+
+    @staticmethod
     def get_exe(request_args):
         exe = request_args.get('exe', [])
         if not isinstance(exe, list):
@@ -103,6 +117,8 @@ class ProcessNode(nodes.LazyNode):
         return match
 
     def make_filter(self, *args, **kwargs):
+        topcpu = self.get_topcpu(kwargs)
+        topmem = self.get_topmem(kwargs)
         exes = self.get_exe(kwargs)
         usernames = self.get_username(kwargs)
         names = self.get_name(kwargs)
@@ -293,7 +309,7 @@ class ProcessNode(nodes.LazyNode):
             procs = subprocess.Popen(['ps', 'aux'], stdout=ps_out)
             procs.wait()
             ps_out.seek(0)
-            
+
             # The first line is the header
             ps_out.readline()
 
@@ -322,7 +338,8 @@ class ProcessNode(nodes.LazyNode):
             try:
                 proc_obj = self.standard_form(self, process, ps_procs, units[0], sleep)
                 if proc_filter(proc_obj):
-                    processes.append(proc_obj)
+                    if proc_obj['name'] != 'System Idle Process':
+                        processes.append(proc_obj)
             except Exception as e:
                 # Could not access process, most likely because of windows permissions
                 logging.exception(e)
@@ -386,6 +403,22 @@ class ProcessNode(nodes.LazyNode):
             kwargs['title'] = self.get_process_label(kwargs)
 
         check_return = super(ProcessNode, self).run_check(*args, **kwargs)
+        topcpu = self.get_topcpu(kwargs)
+        if len(topcpu)>0:
+            try:
+                topcpucount = int(topcpu[0])
+            except:
+                topcpucount=5
+        else:
+            topcpucount = None
+        topmem = self.get_topmem(kwargs)
+        if len(topmem)>0:
+            try:
+                topmemcount = int(topmem[0])
+            except:
+                topmemcount=5
+        else:
+            topmemcount = None
 
         # Add the process information, one process per line, to long output
         proc_count = len(procs['processes'])
@@ -397,10 +430,19 @@ class ProcessNode(nodes.LazyNode):
             mem_unit = ''
 
             # Generate long output for service
+            if topcpucount is not None:
+                procs['processes'].sort(key=lambda item: item.get("cpu_percent"),reverse=True)
+                procs['processes']=procs['processes'][0:topcpucount]
+            if topmemcount is not None:
+                procs['processes'].sort(key=lambda item: item.get("mem_percent"),reverse=True)
+                procs['processes']=procs['processes'][0:topmemcount]
             extra = '\nProcesses Matched\nPID: Name: Username: Exe: Memory: CPU\n-----------------------------------\n'
             for proc in procs['processes']:
+                #print(type(proc['mem_percent']))
+                #print(proc)
                 tmem += proc['mem_percent'][0]
-                tcpu += proc['cpu_percent'][0]
+                if proc['name'] != 'System Idle Process': #exclude Idle proc from total CPU usage
+                    tcpu += proc['cpu_percent'][0]
                 tmem_vms += proc['mem_vms'][0]
                 tmem_rss += proc['mem_rss'][0]
                 mem_unit = proc['mem_vms'][1]
@@ -408,7 +450,7 @@ class ProcessNode(nodes.LazyNode):
                     proc['mem_vms'][1], proc['mem_rss'][0], proc['mem_rss'][1])
                 extra += '%s: %s: %s: %s: %.2f %s\n' % (proc['pid'], proc['name'], proc['username'],
                     memory, proc['cpu_percent'][0], '%')
-            
+
             # Add totals to the output
             extra += '\nTotal Memory: %.2f %s (VMS %.2f %s, RSS %.2f %s)\n' % (tmem, '%', tmem_vms, mem_unit, tmem_rss, mem_unit)
             extra += 'Total CPU: %.2f %s\n' % (tcpu, '%')

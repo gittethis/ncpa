@@ -142,6 +142,50 @@ def get_cpu_node():
     cpu_idle = RunnableNode('idle', method=lambda: ([x.idle for x in ps.cpu_times(percpu=True)], 'ms'))
     return ParentNode('cpu', children=[cpu_count, cpu_system, cpu_percent, cpu_user, cpu_idle])
 
+def get_top_node():
+    from copy import deepcopy
+    '''
+    Get list of running process sorted by Memory Usage
+    '''
+    top = []
+    mem_top_sorted = []
+    cpu_top_sorted = []
+    # Iterate over the list
+    for proc in ps.process_iter():
+       try:
+           # Fetch process details as dict
+           pinfo = proc.as_dict(attrs=['name', 'pid', 'username'])
+           pinfo['vms'] = proc.memory_info().vms / (1024 * 1024)
+           pinfo['cpu_percent'] = proc.cpu_percent()
+
+           #procs['processes'].sort(key=lambda item: item.get("cpu_percent"),reverse=True)
+           # Append dict to list
+           if proc.name() != 'System Idle Process':
+               top.append(pinfo);
+       except (ps.NoSuchProcess, ps.AccessDenied, ps.ZombieProcess):
+           pass
+
+    # Sort list of dict by key vms i.e. memory usage
+    mem_top_sorted = deepcopy(sorted(top, key=lambda procObj: procObj['vms'], reverse=True))
+    mem_top_sorted = mem_top_sorted[0:5]
+
+    cpu_top_sorted = deepcopy(sorted(top, key=lambda procObj: procObj['cpu_percent'], reverse=True))
+    cpu_top_sorted = cpu_top_sorted[0:5]
+
+    keyid='cpu_percent'
+    for items in mem_top_sorted:
+        if keyid in items:
+            del items[keyid]
+
+    keyid='vms'
+    for items in cpu_top_sorted:
+        if keyid in items:
+            del items[keyid]
+
+
+    mem_top = RunnableNode('memory', method=lambda: (mem_top_sorted, 'C'))
+    cpu_top = RunnableNode('cpu', method=lambda: (cpu_top_sorted, 'C'))
+    return ParentNode('top', children=[mem_top,cpu_top])
 
 def get_memory_node():
     mem_virt_total = RunnableNode('total', method=lambda: (ps.virtual_memory().total, 'B'))
@@ -150,8 +194,8 @@ def get_memory_node():
     mem_virt_used = RunnableNode('used', method=lambda: (ps.virtual_memory().used, 'B'))
     mem_virt_free = RunnableNode('free', method=lambda: (ps.virtual_memory().free, 'B'))
     mem_virt = RunnableParentNode('virtual', primary='percent', primary_unit='%',
-                    children=(mem_virt_total, mem_virt_available, mem_virt_free,
-                              mem_virt_percent, mem_virt_used),
+                    children=[mem_virt_total, mem_virt_available, mem_virt_free,
+                              mem_virt_percent, mem_virt_used],
                     custom_output='Memory usage was',
                     # See https://github.com/NagiosEnterprises/ncpa/issues/783
                     add_primary_node_to_perfdata=True)
@@ -173,6 +217,8 @@ def get_memory_node():
                     primary='percent', primary_unit='%',
                     custom_output='Swap usage was',
                     include=('total', 'used', 'free', 'percent'))
+
+
     return ParentNode('memory', children=[mem_virt, mem_swap])
 
 
@@ -260,6 +306,12 @@ def get_root_node(config):
         logging.exception(e)
 
     try:
+        top = get_top_node()
+    except Exception as e:
+        top = ParentNode('N/A')
+        logging.exception(e)
+
+    try:
         disk = get_disk_node(config)
     except Exception as e:
         disk = ParentNode('N/A')
@@ -301,7 +353,7 @@ def get_root_node(config):
         process = ParentNode('N/A')
         logging.exception(e)
 
-    children = [cpu, memory, disk, interface, plugins, user, system, service, process]
+    children = [cpu, memory, disk, interface, plugins, user, system, service, process, top]
 
     if environment.SYSTEM == "Windows":
         for importable in importables:
