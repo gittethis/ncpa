@@ -12,41 +12,62 @@ Downloads
 Current versions:
 
 +---------+-------------+-------------------------------------------------------+
-| Current | **2.4.0**   | `Downloads <https://www.nagios.org/ncpa/#downloads>`_ |
+| Current | **3.0.1**   | `Downloads <https://www.nagios.org/ncpa/#downloads>`_ |
 +---------+-------------+-------------------------------------------------------+
+
+Note: If your nagios repo is outdated when installing NCPA, you must first update your GPG key using the following:
+
+CentOS/RHEL/Oracle::
+
+    yum clean all
+    rpm --import https://repo.nagios.com/GPG-KEY-NAGIOS-V3
+
+Ubuntu/Debian::
+
+    wget -qO - https://repo.nagios.com/GPG-KEY-NAGIOS-V3 | apt-key add -
+
+NOTE: If you're using Debian 11 or one of the other newer OSes and you see an "E: gnupg, gnuph2 and gnupg1 do not seem to be installed..." error when adding the public key you can either install gnupg (apt-get install gnupg) or you can read `how to add the GPG key the new, more secure way <https://stackoverflow.com/questions/68992799/warning-apt-key-is-deprecated-manage-keyring-files-in-trusted-gpg-d-instead>`_.
 
 `Older Versions <https://www.nagios.org/ncpa/archive.php>`_
 
-We currently build for the following operating systems:
+We currently build for the following operating systems on x86-64 architectures:
 
-- Windows (7+)
-- Mac OS X (10.7+)
-- CentOS / RHEL 7, 8
-- CentOS Stream
-- Debian 9, 10
-- Ubuntu 16.04, 18.04, 20.04
-- OpenSUSE Leap 15, Tumbleweed
-- SLES 11, 12, 15
-- Oracle 7, 8
+- CentOS 7+
+- RHEL 7+
+- Oracle 7+
+- Debian 10+
+- Ubuntu 18+
+- OpenSuSE 15+
+- SLES 15+
 - Amazon Linux 2
-- Solaris 11
-- AIX 7
-- Raspbian 10 (Buster)
+- Windows 8.1+
+- Windows Server 2016+
+- MacOS Ventura+ (13+)
 
 Older systems that have been supported by NCPA in the past:
 
-- Ubuntu 12.04 using NCPA 2.1.4
-- Ubuntu 14.04 using NCPA 2.2.2
-- Debian 7 using NCPA 2.1.4
-- Debian 8 using NCPA  2.2.2
-- OpenSUSE 11, 12, 13 using NCPA 2.1.4
-- AIX 6 with NCPA 2.1.1
-- CentOS / RHEL 5 using NCPA 2.0.6
-- CentOS / RHEL 6 using 2.2.2
-- Oracle 5 using NCPA 2.0.6
-- Oracle 6 using NCPA 2.2.2
-- Windows XP/Vista using NCPA 1.8.1
+- Mac OS X 10.7-10.10           - v2.4.0
+- Mac OS X 10.11-12             - v2.4.1
+- Raspbian 10 - Buster          - v2.2.2
+- Ubuntu 12.04                  - v2.1.4
+- Ubuntu 14.04                  - v2.2.2
+- Ubuntu 16.04 32b, 18.04 32b   - v2.4.1
+- Debian 7                      - v2.1.4
+- Debian 8 32b, 9 32b           - v2.4.1
+- OpenSUSE 11, 12, 13           - v2.1.4
+- SLES 11                       - v2.4.0
+- SLES 12                       - v2.4.1
+- AIX 6                         - v2.1.1
+- AIX 7                         - v2.2.1
+- CentOS / RHEL 5               - v2.0.6
+- CentOS / RHEL 6               - v2.2.2
+- CentOS Stream 8 - ARM         - v2.4.0
+- Oracle 5                      - v2.0.6
+- Oracle 6                      - v2.2.2
+- Windows XP/Vista              - v1.8.1
+- Windows 7+ 32-bit             - v2.4.1
 - Solaris 10
+- Solaris 11                    - v2.4.0
 
 If you're looking for older builds you can find them `in the archives <https://www.nagios.org/ncpa/archive.php>`_.
 
@@ -71,3 +92,4 @@ While we recommend using the pre-built version above, sometimes you may find the
 +------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
 | `Building for Windows <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#building-on-windows>`_ | `Building for Linux <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#building-on-linux>`_ | `Building for Mac OS X <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#building-on-mac-os-x>`_ |
 +------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
+

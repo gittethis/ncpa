@@ -47,21 +47,19 @@ adaptation of the input Logged After specification.
 """
 
 import logging
-import nodes
 import datetime
 import win32evtlog
 import re
 import win32evtlogutil
 import win32con
 import pywintypes
-import database
+import listener.database as database
+import listener.server
 import time
-import server
-import ConfigParser
 import platform
 
 
-class WindowsLogsNode(nodes.LazyNode):
+class WindowsLogsNode(listener.nodes.LazyNode):
 
     global stdLogs
     stdLogs = ['Application','System','Security','Setup','Forwarded Events']
@@ -155,7 +153,7 @@ class WindowsLogsNode(nodes.LazyNode):
             check_logging = 1
 
         # Put check results in the check database
-        if not server.__INTERNAL__ and check_logging == 1:
+        if not listener.server.__INTERNAL__ and check_logging == 1:
             db = database.DB()
             current_time = time.time()
             db.add_check(kwargs['accessor'].rstrip('/'), current_time, current_time, returncode,
@@ -252,7 +250,7 @@ def get_filter_dict(request_args):
             else:
                 fdict['EventType'] = [EVENT_TYPE_NEW.get(x, 'UNKNOWN') for x in value]
         elif key == 'logged_after':
-            if isinstance(value, (str, unicode)):
+            if isinstance(value, (str)):
                 logged_after = value
             else:
                 logged_after = value[0]
@@ -330,7 +328,7 @@ def datetime_from_event_date(evt_date):
     doesn't take care of this, but alas, here we are.
     """
     date_string = str(evt_date)
-    time_generated = datetime.datetime.strptime(date_string, '%m/%d/%y %H:%M:%S')
+    time_generated = datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
     return time_generated
 
 

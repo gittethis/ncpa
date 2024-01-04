@@ -2,6 +2,18 @@
 Building NCPA
 =============
 
+This document contains instructions for:
+
+* `Building on Windows <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#building-on-windows>`_
+
+* `Building on Linux <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#building-on-linux>`_
+
+* `Building on MacOS <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#building-on-macos>`_
+
+*WARNING*: DO THIS ON A DEDICATED VM OR A NON-PRODUCTION SYSTEM!
+
+THE BUILD SCRIPT WILL MAKE CHANGES TO THE SYSTEM THAT MAY BE INCOMPATIBLE WITH OTHER SOFTWARE
+
 Building on Windows
 ===================
 
@@ -10,169 +22,90 @@ must be executed by cmd.exe. For this reason, any Windows commands
 listed in this document will be written with cmd.exe compatibility
 in mind.*
 
-Prerequisites
--------------
+*Note: The current Windows build should be run on a Windows machine without Python installed.*
 
-* `Git for Windows <https://git-scm.com/download/win>`_
-* Python 2.7.16 (32-Bit) (`Download <https://www.python.org/downloads/release/python-2716/>`_)
-* OpenSSL for Windows (32-bit) (`Download <https://slproweb.com/download/Win32OpenSSL-1_1_1d.exe>`_) *Requires admin rights*
-* `Microsoft Visual C++ Compiler for Python 2.7 <http://aka.ms/vcpython27>`_
-* `Microsoft Visual C++ 2010 runtime (32-bit) <http://www.microsoft.com/en-us/download/details.aspx?id=8328>`_ *Requires admin rights*
-* `NSIS 3 <http://nsis.sourceforge.net/Download>`_ *Requires admin rights*
+Install the Prerequisites/Build NCPA
+------------------------------------
 
-**Python Packages**
+From a command prompt with Administrative priveleges run::
 
-* pip (installed by default in Python 2.7 for Windows)
-* cx_Freeze (patched)
-* cx_Logging (http://cx-logging.sourceforge.net/)
+  cd /path/to/ncpa/build/
+  build_windows.bat
 
-There are more Python packages that need to be installed too but they are installed later on with a setup script that you can run. A full list of required packages is available in `ncpa/build/resources/requires.txt`.
+This will use Chocolatey to install various prerequisites for building NCPA and then build NCPA. If you have not yet built NCPA 3 on your machine, the script will likely tell you that a reboot is required/pending. This means that you need to restart your machine and then rerun the script and it will continue the installation/build processes. This may happen several times during the installation process.
 
-Configure the Build Environment
--------------------------------
-
-Install Prerequisites
-~~~~~~~~~~~~~~~~~~~~~
-
-* Python
-
-  1. Download and install Python 2.7.16. (`see prerequisites <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#prerequisites>`_)
-  2. Execute the installer as usual. It's important that the
-     installation path is not changed from the default of
-     C:\\python27 as cx_Freeze can have difficulty finding
-     Python resources if it's installed at a custom path.
-
-* OpenSSL
-
-  1. Download and install the OpenSSL package. (`see prerequisites <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#prerequisites>`_)
-  2. Be sure to make a not of the installation directory while installing.
-
-* Microsoft Visual C++ Compiler for Python 2.7
-
-  1. Download and run the installer. (`see prerequisites <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#prerequisites>`_)
-
-  Running the installer without administrator privileges will
-  cause the files to be installed to::
-
-  %LOCALAPPDATA%\Programs\Common\Microsoft\Visual C++ for Python\9.0
-
-* Microsoft Visual C++ 2010 runtime (32-bit)
-
-  1. Download and run the installer. (`see prerequisites <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#prerequisites>`_)
-
-* NSIS
-
-  1. Download and run the installer. (`see prerequisites <https://github.com/NagiosEnterprises/ncpa/blob/master/BUILDING.rst#prerequisites>`_)
-
-* pip
-
-  * Pip is installed by default in Python 2.7.16 but should be updated before continuing::
-
-      "%pydir%" -m pip install --upgrade pip
-
-Set Environment Variables
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Two variables must be set for the win_build_setup.bat script to run properly:
-
-* **pydir**: The root directory of your Python installation.
-
-  This should be::
-
-    C:\Python27
-
-* **openssldir**: The root directory of your OpenSSL installation.
-
-  This should be::
-
-    C:\Program Files (x86)\OpenSSL-Win32
-
-Set these variables by running::
-
-  set pydir=C:\Python27
-  set openssldir=C:\Program Files (x86)\OpenSSL-Win32
-
-Install the Last Modules
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Install the full list of python modules
-
-  "%pydir%\python" -m pip install --upgrade -r build/resources/require.txt
-
-* cx_Logging (http://cx-logging.sourceforge.net/)
-
-  * Install the python 2.7 version of cx_Logging for Windows via the .msi
-
-* cx_Freeze (patched)
-
-  * Install cx_Freeze via pip:
-
-    pip install cx_Freeze==4.3.4
-
-  * Then, copy our patch into the package:
-
-      ncpa\build\resources\cx_Freeze-4.3.4.tar.gz
-      copy "ncpa\build\resources\cx_Freeze-4.3.4.tar\cx_Freeze-4.3.4\cx_Freeze\freezer.py" C:\Python27\Lib\site-packages\cx_Freeze\freezer.py
-
-Build NCPA
-~~~~~~~~~~
-
-Run the build script::
-
-  "%pydir%\python" build\build_windows.py
+This will create a file called ``ncpa-<version>.exe`` in the ``build`` directory.
+This is the installer for NCPA and can be used to install NCPA on a Windows system.
 
 
 Building on Linux
 =================
 
-Building from most Linux distros is much less complicated than Windows. We have a
-couple helpful scripts that make it much easier. *We will assume you have wget and git installed*
+Building on CentOS 7 is the easiest way to get a working package for all Linux distributions. When you build on CentOS 7, both a .deb as well as an .rpm package are built.
+
+In most cases, building on the distribution that is targeted, e.g. building on Ubuntu 20.04 to deploy on Ubuntu 20.04, will work, but the resulting package will not be as portable.
 
 To start, clone the repository in your directory::
+
+   cd ~
+   git clone https://github.com/NagiosEnterprises/ncpa
+
+Now run the setup scripts to install the requirements::
+
+   cd ncpa/build
+   ./build.sh
+
+Follow the prompts to setup the system. When running the build.sh script it will setup
+the system and build the ncpa binary.
+
+
+**Install on the target Linux server**
+--------------------------------
+
+Copy the resulting ~/ncpa/build/ncpa-3.X.X-latest.x86_64.rpm or ncpa_3.X.X-latest_amd64.deb to the desired server and install using the appropriate package system:
+
+  On CentOS/RHEL/Oracle/Amazon/Rocky::
+
+    yum install ./ncpa-3.X.X-latest.x86_64.rpm
+
+  On Ubuntu 18+/Debian 10+::
+
+    dpkg -i ./ncpa_3.X.X-latest._amd64.deb
+
+  On Ubuntu 14-16/Debian 8-9 (not supported, but may work)::
+
+    dpkg --force-depends -i ./ncpa_3.X.X-latest._amd64.deb
+
+  On OpenSuSE/SLES::
+
+    zypper install ./ncpa-3.X.X-latest.x86_64.rpm
+
+
+Building on MacOS
+=================
+
+*Not updated for v3, yet.*
+It's basically the same as Linux, however you may need to
+install the libraries and python differently, due to it being macOS. You must have
+python3, wget and git installed prior to building NCPA v3.x.:
+
+
+**Clone the repository into your directory**::
 
   cd ~
   git clone https://github.com/NagiosEnterprises/ncpa
 
-*Note: Running the following scripts on CentOS 7 will make yum not work due to the
-Python version that yum uses. You can build the CentOS 7 version with the Python version
-that comes with it, but you will have to install things manually.*
+**Make your user root, and install the xcode command line tools**::
 
-Now run the setup scripts to install the requirements::
+  sudo su -
+  xcode-select --install
 
-  cd ncpa/build/
+**Execute the build script**::
+
+  cd ~/ncpa/build
   ./build.sh
 
-Once these have completed you can do an actual build. You can run make differently depending
-on which type of Linux you have.
-
-*Warning: Be careful when making changes to NCPA while building, you should commit your
-changes since `make all` will do a `git reset --hard` before building.*
-
-On RPM-based systems::
-
-  cd build
-  make build_rpm
-
-On DEB-based systems::
-
-  cd build
-  make build_deb
-
-
-Building on Mac OS X
-====================
-
-Working on this section. Using the new build system, these four lines should be enough
-to create a working NCPA DMG.
-
-    sudo su -
-    xcode-select --install
-    cd build
-    ./build.sh
-
-Note that there may be some difficulty with installing this on other machines without
-Apple Developer credentials. As of MacOS Catalina, this means going to
-System Preferences -> Security & Privacy and explicitly allowing the programs each time
-they run.
+Note that there may be some difficulty with installing this on other machines without Apple Developer credentials, and with the enhanced system security in newer versions. Please see `Installing on Nagios NCPA v 2.4 Agent on MacOS <https://nagiosenterprises.my.site.com/support/s/article/Installing-the-Nagios-NCPA-v-2-4-Agent-on-MacOS-7ec3e7de>`_ for more information.
 
 Building Tips
 =============
@@ -186,18 +119,3 @@ to be compiled and behave correctly with Python. We recommend compiling them fro
 source if you must, and compiling Python from source too - with any changes you need
 to give the Python build process for library locations. Once that's done, you can
 continue by installing the required `pip` modules and trying the build process.
-
-Making NCPA is pretty easy once the requirements are done, just run make:
-
-*Warning: Be careful when making changes to NCPA while building, you should commit your
-changes since `make all` will do a `git reset --hard` before building.*
-
-On RPM-based systems::
-
-  cd build
-  make build_rpm
-
-On DEB-based systems::
-
-  cd build
-  make build_deb
