@@ -101,6 +101,20 @@ class ProcessNode(nodes.LazyNode):
                 match = match[0]
         return match
 
+    @staticmethod
+    def get_topcpu(request_args):
+        topcpu = request_args.get('topcpu', [])
+        if not isinstance(topcpu, list):
+            topcpu = [topcpu]
+        return topcpu
+
+    @staticmethod
+    def get_topmem(request_args):
+        topmem = request_args.get('topmem', [])
+        if not isinstance(topmem, list):
+            topmem = [topmem]
+        return topmem
+
     def make_filter(self, *args, **kwargs):
         exes = self.get_exe(kwargs)
         usernames = self.get_username(kwargs)
@@ -108,6 +122,8 @@ class ProcessNode(nodes.LazyNode):
         cmds = self.get_cmd(kwargs)
         cpu_percent = self.get_cpu_percent(kwargs)
         mem_percent = self.get_mem_percent(kwargs)
+        topcpu = self.get_topcpu(kwargs)
+        topmem = self.get_topmem(kwargs)
         comparison = self.get_combiner(kwargs)
         mem_rss = self.get_mem_rss(kwargs)
         mem_vms = self.get_mem_vms(kwargs)
@@ -323,7 +339,8 @@ class ProcessNode(nodes.LazyNode):
             try:
                 proc_obj = self.standard_form(self, process, ps_procs, units[0], sleep)
                 if proc_filter(proc_obj):
-                    processes.append(proc_obj)
+                    if proc_obj['name'] != 'System Idle Process':
+                        processes.append(proc_obj)
             except Exception as e:
                 # Could not access process, most likely because of windows permissions
                 logging.exception(e)
@@ -387,7 +404,24 @@ class ProcessNode(nodes.LazyNode):
             kwargs["title"] = self.get_process_label(kwargs)
 
         check_return = super(ProcessNode, self).run_check(*args, **kwargs)
-
+        
+        topcpu = self.get_topcpu(kwargs)
+        if len(topcpu)>0:
+            try:
+                topcpucount = int(topcpu[0])
+            except:
+                topcpucount=5
+        else:
+            topcpucount = None
+        topmem = self.get_topmem(kwargs)
+        if len(topmem)>0:
+            try:
+                topmemcount = int(topmem[0])
+            except:
+                topmemcount=5
+        else:
+            topmemcount = None
+            
         # Add the process information, one process per line, to long output
         proc_count = len(procs["processes"])
         if proc_count > 0:
@@ -398,10 +432,17 @@ class ProcessNode(nodes.LazyNode):
             mem_unit = ""
 
             # Generate long output for service
+            if topcpucount is not None:
+                procs['processes'].sort(key=lambda item: item.get("cpu_percent"),reverse=True)
+                procs['processes']=procs['processes'][0:topcpucount]
+            if topmemcount is not None:
+                procs['processes'].sort(key=lambda item: item.get("mem_percent"),reverse=True)
+                procs['processes']=procs['processes'][0:topmemcount]
             extra = "\nProcesses Matched\nPID: Name: Username: Exe: Memory: CPU\n-----------------------------------\n"
             for proc in procs["processes"]:
                 tmem += proc["mem_percent"][0]
-                tcpu += proc["cpu_percent"][0]
+                if proc['name'] != 'System Idle Process': #exclude Idle proc from total CPU usage
+                    tcpu += proc['cpu_percent'][0]
                 tmem_vms += proc["mem_vms"][0]
                 tmem_rss += proc["mem_rss"][0]
                 mem_unit = proc["mem_vms"][1]
